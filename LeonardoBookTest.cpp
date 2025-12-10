@@ -1,178 +1,11 @@
 #include <iostream>
 #include <string>
-#include <vector>
-#include <cctype>
+#include "Book.h"
 using namespace std;
-
-// ===== Base class with validation =====
-class Book {
-protected:
-    string title;
-    string author;
-    string isbn;
-    bool available;
-    string dateAdded;
-    bool valid;
-
-public:
-    Book(string t, string a, string i, bool av, string date)
-        : title(t), author(a), isbn(i), available(av), dateAdded(date), valid(true) {
-        validateBook();
-    }
-
-    virtual ~Book() {}
-
-    string getIsbn() const {
-        return isbn;
-    }
-
-    string getTitle() const {
-        return title;
-    }
-
-    bool isAvailable() const {
-        return available && valid;
-    }
-
-    bool isValid() const {
-        return valid;
-    }
-
-    void validateBook() {
-        valid = true;
-        string errors = "";
-
-        // Title check
-        if (title.empty()) {
-            errors += "Title Error: empty; ";
-            valid = false;
-        }
-
-        // Author check
-        if (author.empty()) {
-            errors += "Author Error: empty; ";
-            valid = false;
-        }
-
-        // ISBN numeric check
-        bool isbnNumeric = !isbn.empty();
-        for (char c : isbn) {
-            if (!isdigit(static_cast<unsigned char>(c))) {
-                isbnNumeric = false;
-                break;
-            }
-        }
-        if (!isbnNumeric) {
-            errors += "ISBN Error: not numeric; ";
-            valid = false;
-        }
-
-        // Date format YYYY-MM-DD check
-        if (dateAdded.length() != 10 ||
-            dateAdded[4] != '-' ||
-            dateAdded[7] != '-') {
-            errors += "Date Error: wrong format; ";
-            valid = false;
-        }
-
-        if (!errors.empty()) {
-            cout << "Book validation errors - " << (title.empty() ? "No title" : title)
-                 << ": " << errors << "\n";
-        }
-    }
-
-    virtual void display() const {
-        if (!valid) {
-            cout << "INVALID BOOK: " << (title.empty() ? "No title" : title) << "\n";
-            return;
-        }
-        cout << "Title: " << title << "\n";
-        cout << "Author: " << author << "\n";
-        cout << "ISBN: " << isbn << "\n";
-        cout << "Available: " << (available ? "Yes" : "No") << "\n";
-        cout << "Date added: " << dateAdded << "\n";
-    }
-
-    void borrowBook() {
-        if (!valid) {
-            cout << "Cannot borrow \"" << (title.empty() ? "No title" : title)
-                 << "\" because data is invalid.\n";
-            return;
-        }
-        if (available) {
-            available = false;
-            cout << "You borrowed \"" << title << "\".\n";
-        } else {
-            cout << "The book \"" << title << "\" is not available.\n";
-        }
-    }
-
-    void returnBook() {
-        if (!valid) {
-            cout << "Cannot return \"" << (title.empty() ? "No title" : title)
-                 << "\" because data is invalid.\n";
-            return;
-        }
-        available = true;
-        cout << "You returned \"" << title << "\".\n";
-    }
-};
-
-// ===== HardcopyBook =====
-class HardcopyBook : public Book {
-private:
-    string shelfNumber;
-
-public:
-    HardcopyBook(string t, string a, string i, bool av,
-                 string date, string shelf)
-        : Book(t, a, i, av, date), shelfNumber(shelf) {
-    }
-
-    void display() const override {
-        Book::display();
-        if (valid) {
-            cout << "Shelf number: " << shelfNumber << "\n";
-        }
-    }
-};
-
-// ===== EBook =====
-class EBook : public Book {
-private:
-    string licenseEndDate;
-
-public:
-    EBook(string t, string a, string i, bool av,
-          string date, string licenseEnd)
-        : Book(t, a, i, av, date), licenseEndDate(licenseEnd) {
-    }
-
-    void display() const override {
-        Book::display();
-        if (valid) {
-            cout << "License end date: " << licenseEndDate << "\n";
-        }
-    }
-};
-
-// ===== Bubble sort by title (A–Z) =====
-void sortBooks(Book* books[], int size) {
-    for (int i = 0; i < size - 1; i++) {
-        for (int j = 0; j < size - i - 1; j++) {
-            if (books[j]->getTitle() > books[j + 1]->getTitle()) {
-                Book* temp = books[j];
-                books[j] = books[j + 1];
-                books[j + 1] = temp;
-            }
-        }
-    }
-}
 
 int main() {
     cout << "=== ICT0008 A3 Test Application (Leonardo) ===\n\n";
 
-    // ===== Correct books =====
     cout << "TEST 1 - CORRECT BOOKS\n\n";
 
     HardcopyBook* correct1 = new HardcopyBook(
@@ -196,20 +29,19 @@ int main() {
     }
     cout << "\n";
 
-    // ===== Incorrect books =====
     cout << "TEST 2 - INCORRECT BOOKS\n\n";
 
     HardcopyBook* bad1 = new HardcopyBook(
         "I'm Glad My Mom Died", "Jennette McCurdy",
-        "ABC123", true, "11-01-2025", "X1");   // bad ISBN and date
+        "ABC123", true, "11-01-2025", "X1");
 
     HardcopyBook* bad2 = new HardcopyBook(
         "One of Us Is Lying", "",
-        "9780141375632", true, "2025/11/01", "B3"); // empty author, wrong date
+        "9780141375632", true, "2025/11/01", "B3");
 
     EBook* bad3 = new EBook(
         "The Handmaid's Tale", "Margaret Atwood",
-        "978X9740919", true, "2025-11", "2026-12"); // bad ISBN, bad date
+        "978X9740919", true, "2025-11", "2026-12");
 
     Book* badBooks[3] = { bad1, bad2, bad3 };
 
@@ -220,10 +52,8 @@ int main() {
     }
     cout << "\n";
 
-    // ===== Sorting tests =====
     cout << "TEST 3 - SORTING BY TITLE (A-Z)\n\n";
 
-    // a) Ascending (already sorted)
     Book* asc[3] = { correct1, correct2, correct3 };
     cout << "Array A - Ascending BEFORE sort:\n";
     for (int i = 0; i < 3; i++) {
@@ -237,7 +67,6 @@ int main() {
     }
     cout << "\n\n";
 
-    // b) Descending
     Book* desc[3] = { correct3, correct2, correct1 };
     cout << "Array B - Descending BEFORE sort:\n";
     for (int i = 0; i < 3; i++) {
@@ -251,7 +80,6 @@ int main() {
     }
     cout << "\n\n";
 
-    // c) Mixed
     Book* mixed[3] = { correct2, correct3, correct1 };
     cout << "Array C - Mixed BEFORE sort:\n";
     for (int i = 0; i < 3; i++) {
@@ -265,7 +93,6 @@ int main() {
     }
     cout << "\n\n";
 
-    // ===== Interactive menu =====
     cout << "INTERACTIVE LIBRARY MENU\n";
 
     Book* allBooks[6] = {
@@ -314,10 +141,10 @@ int main() {
                 cout << "Book not found.\n";
             }
         }
-        else if (option == "3") {
-            cout << "Enter ISBN to return: ";
-            getline(cin, isbnInput);
-            bool found = false;
+else if (option == "3") {
+cout << "Enter ISBN to return: ";
+getline(cin, isbnInput);
+            found = false;
             for (int i = 0; i < 6; i++) {
                 if (allBooks[i]->getIsbn() == isbnInput) {
                     allBooks[i]->returnBook();
@@ -334,7 +161,6 @@ int main() {
         }
     }
 
-    // Clean up
     for (int i = 0; i < 6; i++) {
         delete allBooks[i];
     }
